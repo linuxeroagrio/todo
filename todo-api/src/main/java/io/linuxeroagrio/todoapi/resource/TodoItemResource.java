@@ -14,6 +14,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -44,9 +45,21 @@ public class TodoItemResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<TodoItem> listTodoItems(){
-        LOGGER.debug("Todoitem List");
-        return TodoItem.listAll();
+    public Collection<TodoItem> listTodoItems(@QueryParam("completed") boolean completedTodoItems, @QueryParam("inprogress") boolean inProgressTodoItems){
+        Collection<TodoItem> todoItemsList=null;
+        if((completedTodoItems==false&&inProgressTodoItems==false)||(completedTodoItems==true&&inProgressTodoItems==true)){
+            LOGGER.debug("Todoitem List");
+            return TodoItem.listAll();
+        }
+        if(completedTodoItems==true&&inProgressTodoItems==false){
+            LOGGER.debug("Todoitem List Completed");
+            return TodoItem.list("status", true);
+        }
+        if(completedTodoItems==false&&inProgressTodoItems==true){
+            LOGGER.debug("Todoitem List Inactives");
+            return TodoItem.list("status", false);
+        }
+        return todoItemsList;
     }
 
     @GET
@@ -95,6 +108,17 @@ public class TodoItemResource {
     public Response deleteTodoItem(@PathParam("id") int id){
         LOGGER.debugf("delete by id %i", id);
         TodoItem.delete("id", id);
+        return Response.accepted().build();
+    }
+
+    @DELETE
+    @Transactional
+    public Response deleteCompleteItems(@QueryParam("deletecompleted") boolean deleteCompletedTodoItems)
+    {
+        LOGGER.debugf("delete by status true");
+        if(deleteCompletedTodoItems==true){
+            TodoItem.delete("status", true);
+        }
         return Response.accepted().build();
     }
 }
